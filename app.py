@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template, url_for
 from datetime import datetime, timedelta
 import hashlib
 
@@ -22,10 +22,12 @@ def autenticar(email, senha):
 
 @app.route('/')
 def home():
-    return "Hello World"
+    return render_template('home.html')
 
-@app.route('/cadastro', methods=['POST'])
+@app.route('/cadastro', methods=['GET', 'POST'])
 def cadastrar_aluno():
+    if request.method == 'GET':
+        return render_template('cadastro.html')
     novo_aluno = request.get_json()
     aluno_id = len(db_alunos) + 1
     novo_aluno["senha"] = hashlib.sha256(novo_aluno["senha"].encode()).hexdigest()
@@ -37,8 +39,10 @@ def cadastrar_aluno():
     }
     return jsonify({"id": aluno_id, "nome": novo_aluno["nome"]}), 201
 
-@app.route('/login', methods=['POST'])
+@app.route('/login', methods=['GET', 'POST'])
 def login():
+    if request.method == 'GET':
+        return render_template('login.html')
     dados_login = request.get_json()
     if autenticar(dados_login["email"], dados_login["senha"]):
         return jsonify({"mensagem": "Login bem-sucedido"}), 200
