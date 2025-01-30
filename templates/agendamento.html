@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agendamento de Aula</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Agendamento de Aula</h1>
+        <form id="agendamento-form">
+            <label for="horario">Escolha um horário:</label>
+            <select id="horario" name="horario" required>
+                <option value="">Selecione...</option>
+                <option value="2025-02-01 10:00:00">01/02/2025 às 10:00</option>
+                <option value="2025-02-01 14:00:00">01/02/2025 às 14:00</option>
+                <option value="2025-02-01 16:00:00">01/02/2025 às 16:00</option>
+                <!-- Adicione mais horários conforme necessário -->
+            </select>
+            <input type="hidden" id="aluno_id" name="aluno_id" value="<!-- ID do Aluno -->">
+            <button type="submit">Agendar</button>
+        </form>
+        <div id="mensagem"></div>
+        <a href="/">Voltar</a>
+    </div>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
