@@ -77,8 +77,9 @@ def cancelar_aula():
     if not agendamento_existente:
         return jsonify({"erro": "Agendamento não encontrado"}), 404
 
-    if datetime.now() > data_aula - timedelta(days=1, hours=22):
-        return jsonify({"erro": "Cancelamento permitido apenas até as 22h do dia anterior"}), 400
+    # Verifica se o cancelamento está sendo feito até 12 horas antes do início da aula
+    if datetime.now() > data_aula - timedelta(hours=12):
+        return jsonify({"erro": "Cancelamento permitido apenas até 12h antes do início da aula"}), 400
 
     db_agendamentos.remove(agendamento_existente)
     db_alunos[aluno_id]["creditos"] += 1
@@ -108,8 +109,8 @@ def obter_aluno(aluno_id):
 @app.route('/agendamentos/<int:aluno_id>', methods=['GET'])
 def obter_agendamentos(aluno_id):
     agendamentos = [a for a in db_agendamentos if a["aluno_id"] == aluno_id]
+    agendamentos.sort(key=lambda x: x["data"])  # Ordena os agendamentos por data e horário
     return jsonify(agendamentos)
 
 if __name__ == '__main__':
     app.run(debug=True)
-
