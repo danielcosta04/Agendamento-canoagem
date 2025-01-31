@@ -16,7 +16,6 @@
                 <option value="2025-02-01 10:00:00">01/02/2025 às 10:00</option>
                 <option value="2025-02-01 14:00:00">01/02/2025 às 14:00</option>
                 <option value="2025-02-01 16:00:00">01/02/2025 às 16:00</option>
-                <!-- Adicione mais horários conforme necessário -->
             </select>
             <input type="hidden" id="aluno_id" name="aluno_id" value="<!-- ID do Aluno -->">
             <button type="submit">Agendar</button>
@@ -24,10 +23,10 @@
         <div id="mensagem"></div>
         <h2>Meus Agendamentos</h2>
         <ul id="agendamentos-lista">
-            <!-- Lista de agendamentos será preenchida pelo JavaScript -->
         </ul>
         <a href="/">Voltar</a>
     </div>
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>
+

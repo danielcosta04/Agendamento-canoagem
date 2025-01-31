@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, render_template, url_for
+from flask import Flask, request, jsonify, render_template, url_for, redirect
 from datetime import datetime, timedelta
 import hashlib
 
@@ -45,24 +45,22 @@ def login():
         return render_template('login.html')
     dados_login = request.get_json()
     if autenticar(dados_login["email"], dados_login["senha"]):
-        return jsonify({"mensagem": "Login bem-sucedido"}), 200
+        return redirect(url_for('agendar_aula'))
     return jsonify({"erro": "Credenciais inválidas"}), 401
 
-@app.route('/agendamento', methods=['POST'])
+@app.route('/agendamento', methods=['GET', 'POST'])
 def agendar_aula():
+    if request.method == 'GET':
+        return render_template('agendamento.html')
     agendamento = request.get_json()
     aluno_id = agendamento["aluno_id"]
     data_aula = datetime.strptime(agendamento["data"], "%Y-%m-%d %H:%M:%S")
-
     if aluno_id not in db_alunos:
         return jsonify({"erro": "Aluno não encontrado"}), 404
-
     if db_alunos[aluno_id]["creditos"] <= 0:
         return jsonify({"erro": "Créditos insuficientes"}), 400
-
     # Reduz um crédito do aluno
     db_alunos[aluno_id]["creditos"] -= 1
-
     # Adiciona o agendamento ao banco de dados fictício
     db_agendamentos.append({"aluno_id": aluno_id, "data": data_aula})
     return jsonify({"mensagem": "Aula agendada com sucesso", "data": data_aula}), 201
@@ -72,11 +70,9 @@ def cancelar_aula():
     cancelamento = request.get_json()
     aluno_id = cancelamento["aluno_id"]
     data_aula = datetime.strptime(cancelamento["data"], "%Y-%m-%d %H:%M:%S")
-
     agendamento_existente = next((a for a in db_agendamentos if a["aluno_id"] == aluno_id and a["data"] == data_aula), None)
     if not agendamento_existente:
         return jsonify({"erro": "Agendamento não encontrado"}), 404
-
     # Verifica se o cancelamento está sendo feito até 12 horas antes do início da aula
     if datetime.now() > data_aula - timedelta(hours=12):
         return jsonify({"erro": "Cancelamento permitido apenas até 12h antes do início da aula"}), 400
@@ -90,13 +86,10 @@ def carregar_creditos():
     request_data = request.get_json()
     if datetime.now().day > 5:
         return jsonify({"erro": "Créditos só podem ser carregados até o dia 05"}), 400
-
     aluno_id = request_data["aluno_id"]
     quantidade_creditos = request_data["quantidade"]
-
     if aluno_id not in db_alunos:
         return jsonify({"erro": "Aluno não encontrado"}), 404
-
     db_alunos[aluno_id]["creditos"] += quantidade_creditos
     return jsonify({"mensagem": "Créditos carregados com sucesso"}), 200
 
