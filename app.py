@@ -1,8 +1,9 @@
-from flask import Flask, request, jsonify, render_template, url_for, redirect
+from flask import Flask, request, jsonify, render_template, url_for, redirect, session
 from datetime import datetime, timedelta
 import hashlib
 
 app = Flask(__name__)
+app.secret_key = 'sua_chave_secreta_aqui'
 
 # Banco de dados fictício para alunos e créditos
 db_alunos = {
@@ -15,10 +16,10 @@ db_agendamentos = []
 
 def autenticar(email, senha):
     senha_hash = hashlib.sha256(senha.encode()).hexdigest()
-    for aluno in db_alunos.values():
+    for aluno_id, aluno in db_alunos.items():
         if aluno["email"] == email and aluno["senha"] == senha_hash:
-            return True
-    return False
+            return True, aluno_id
+    return False, None
 
 @app.route('/')
 def home():
@@ -44,14 +45,17 @@ def login():
     if request.method == 'GET':
         return render_template('login.html')
     dados_login = request.get_json()
-    if autenticar(dados_login["email"], dados_login["senha"]):
+    autenticado, aluno_id = autenticar(dados_login["email"], dados_login["senha"])
+    if autenticado:
+        session['aluno_id'] = aluno_id
         return redirect(url_for('agendar_aula'))
     return jsonify(erro="Credenciais inválidas"), 401
 
 @app.route('/agendamento', methods=['GET', 'POST'])
 def agendar_aula():
     if request.method == 'GET':
-        return render_template('agendamento.html')
+        aluno_id = session.get('aluno_id')
+        return render_template('agendamento.html', aluno_id=aluno_id)
     agendamento = request.get_json()
     aluno_id = agendamento["aluno_id"]
     data_aula = datetime.strptime(agendamento["data"], "%Y-%m-%d %H:%M:%S")
@@ -59,9 +63,7 @@ def agendar_aula():
         return jsonify(erro="Aluno não encontrado"), 404
     if db_alunos[aluno_id]["creditos"] <= 0:
         return jsonify(erro="Créditos insuficientes"), 400
-    # Reduz um crédito do aluno
     db_alunos[aluno_id]["creditos"] -= 1
-    # Adiciona o agendamento ao banco de dados fictício
     db_agendamentos.append({"aluno_id": aluno_id, "data": data_aula})
     return jsonify(mensagem="Aula agendada com sucesso", data=str(data_aula)), 201
 
@@ -73,7 +75,6 @@ def cancelar_aula():
     agendamento_existente = next((a for a in db_agendamentos if a["aluno_id"] == aluno_id and a["data"] == data_aula), None)
     if not agendamento_existente:
         return jsonify(erro="Agendamento não encontrado"), 404
-    # Verifica se o cancelamento está sendo feito até 12 horas antes do início da aula
     if datetime.now() > data_aula - timedelta(hours=12):
         return jsonify(erro="Cancelamento permitido apenas até 12h antes do início da aula"), 400
 
@@ -102,7 +103,7 @@ def obter_aluno(aluno_id):
 @app.route('/agendamentos/<int:aluno_id>', methods=['GET'])
 def obter_agendamentos(aluno_id):
     agendamentos = [a for a in db_agendamentos if a["aluno_id"] == aluno_id]
-    agendamentos.sort(key=lambda x: x["data"])  # Ordena os agendamentos por data e horário
+    agendamentos.sort(key=lambda x: x["data"])
     return jsonify(agendamentos)
 
 if __name__ == '__main__':
