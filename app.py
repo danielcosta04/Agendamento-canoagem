@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 import hashlib
 
 app = Flask(__name__)
-app.secret_key = 'sua_chave_secreta_aqui'
+app.secret_key = 'admin123'
 
 # Banco de dados fictício para alunos e créditos
 db_alunos = {
